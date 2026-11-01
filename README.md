@@ -1,58 +1,61 @@
-# service
+# Service template
 
-Каркас бэкенд-сервиса: FastAPI + dishka + SQLAlchemy 2.0 (imperative mapping) +
-Alembic + FastStream (Kafka) + taskiq (Redis) + Prometheus.
-Clean Architecture / DDD + CQRS.
+Шаблон cookiecutter для бэкенд-сервисов: Clean Architecture / DDD + CQRS на
+FastAPI, dishka, SQLAlchemy 2.0 (imperative mapping), Alembic, pydantic-settings.
+По выбору подключаются Kafka (FastStream), фоновые задачи (taskiq + Redis) и
+Prometheus-метрики.
 
-Архитектура, структура каталогов, рецепт добавления сущности и чек-лист
-связывания — в [docs/architecture.md](docs/architecture.md).
-
-## Быстрый старт
-
-Нужны Python 3.12, poetry и Docker.
+## Создать проект
 
 ```bash
-make install        # poetry install → .venv в проекте
-make config         # configs/prod.toml из примера (значения совпадают с docker-compose.dev.yml)
-make infra-up       # postgres :5432, redis :6379, kafka :9092
-make migrate        # alembic upgrade head
-make run            # API → http://localhost:8000/docs
+uvx cookiecutter gh:1heroo/project-boilerplate
+# или из git: uvx cookiecutter git+<url-репозитория>
 ```
 
-Остальные процессы, каждый в своём терминале:
+Cookiecutter задаст вопросы (развилки):
+
+| Параметр | По умолчанию | Что делает |
+|---|---|---|
+| `project_name` | My Service | Название, title API |
+| `project_slug` | из названия | Каталог, имя пакета в pyproject, compose project, consumer group |
+| `description`, `author` | — | Метаданные pyproject и README |
+| `db_schema` | `core` | Схема Postgres для таблиц сервиса и `alembic_version` |
+| `timezone` | `Asia/Bishkek` | `TZ` в Dockerfile |
+| `use_kafka` | да | `src/broker.py`, FastStream-консьюмеры, Kafka в compose |
+| `use_taskiq` | да | Воркер и планировщик taskiq, Redis, `ITaskQueue` |
+| `use_metrics` | да | Отдельная metrics-апка, HTTP-метрики, multiprocess Prometheus |
+| `include_example` | да | Сущность `Item` через все слои: CRUD, событие → задача, Kafka-консьюмер, тесты |
+| `include_admin_stub` | да | Пустые пакеты `application/admin/`, `routes/admin/` |
+
+Без вопросов, с параметрами:
 
 ```bash
-make broker            # Kafka consumers
-make taskiq            # воркер фоновых задач
-make taskiq-scheduler  # cron-задачи (ровно один экземпляр)
-make metrics           # http://localhost:8002/metrics
+uvx cookiecutter --no-input gh:1heroo/project-boilerplate \
+  project_name="Payments Reports" use_kafka=false include_example=false
 ```
 
-## Команды
+Дальше — `README.md` сгенерированного проекта (`make install requirements`,
+`make infra-up migrate run`). Схема слоёв, рецепт новой сущности и чек-лист
+связывания — в его `docs/architecture.md`.
 
-```bash
-make help              # список всех целей
-make test              # pytest
-make lint / format     # ruff
-make migration m="add foo"
-make requirements      # синхронизировать requirements.txt для Docker
-```
+## Как устроен шаблон
 
-## Новый проект из каркаса
+- `{{cookiecutter.project_slug}}/` — сам проект. Общие файлы (settings, DI,
+  registry, роуты, pyproject, Makefile, compose, конфиг) содержат Jinja-условия
+  по опциям.
+- `hooks/pre_gen_project.py` — проверяет слаг и имя схемы.
+- `hooks/post_gen_project.py` — удаляет файлы и каталоги отключённых модулей,
+  создаёт `configs/prod.toml` из примера.
+- `scripts/check_template.sh` — генерирует все 32 комбинации опций и для каждой
+  гоняет ruff, pytest, импорт entry points и проверяет, что не осталось следов
+  отключённых модулей и неотрендеренного Jinja. Запускать после любой правки шаблона.
 
-1. Скопировать каталог и переименовать `service` в `pyproject.toml`,
-   `[fastapi] title` в `configs/prod.toml.example`, `name` в `docker-compose.dev.yml`.
-2. Свою доменку добавить по рецепту из `docs/architecture.md` §5. Пример `Item`
-   удалить или переделать: `domain/entities/item.py`, `application/items/`,
-   `routes/main/items/`, модель, репозиторий, миграцию `0001_initial`, задачи в
-   `infrastructure/tasks/jobs/items.py`, консьюмер в `presentation/broker/consumers/items.py`,
-   регистрации в DI/registry.
-3. Ненужные модули (Kafka / taskiq / метрики) убрать по таблице из §12.
-4. Если меняется схема БД (`core`), поправить `DB_SCHEMA` в `models/base.py` и
-   имя схемы в первой миграции.
+## Правка шаблона
 
-## Деплой
-
-`Dockerfile` собирает один образ; процессы запускаются скриптами из
-`entrypoints/dev/` (`start.app.sh` перед стартом накатывает миграции).
-Конфиг в контейнере — `configs/prod.toml` или env-переменные `SECTION__KEY`.
+- Новый опциональный модуль: добавить флаг в `cookiecutter.json` (+ `__prompts__`),
+  его файлы — в списки `hooks/post_gen_project.py`, точки подключения обернуть в
+  `{%- if cookiecutter.<flag> %}`, проверку следов — в `scripts/check_template.sh`.
+- Файлы, где есть `{{`/`{%` не для Jinja, — в `_copy_without_render`.
+- Markdown с большим количеством кириллицы в первом килобайте cookiecutter
+  принимает за бинарный и не рендерит: поэтому в начале `README.md` и
+  `docs/architecture.md` стоит ASCII-блок (опции генерации, схема слоёв).

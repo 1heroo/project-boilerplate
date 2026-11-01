@@ -1,0 +1,73 @@
+[tool.poetry]
+name = "{{ cookiecutter.project_slug }}"
+version = "0.1.0"
+description = "{{ cookiecutter.description }}"
+authors = [{% if cookiecutter.author %}"{{ cookiecutter.author }}"{% endif %}]
+readme = "README.md"
+packages = [{ include = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "0.116.2"
+uvicorn = "0.34.3"
+gunicorn = "22.0.0"
+python-multipart = "0.0.20"
+dishka = "1.6.0"
+sqlalchemy = "2.0.43"
+asyncpg = "0.30.0"
+alembic = "1.16.2"
+greenlet = "^3.0"
+{%- if cookiecutter.use_kafka %}
+faststream = { version = "0.5.44", extras = ["cli"] }
+confluent-kafka = "2.11.0"
+{%- endif %}
+{%- if cookiecutter.use_taskiq %}
+taskiq = "0.12.3"
+taskiq-redis = "1.0.4"
+redis = "5.3.0"
+{%- endif %}
+pydantic = "2.11.7"
+pydantic-settings = "2.10.1"
+python-json-logger = "3.3.0"
+{%- if cookiecutter.use_metrics %}
+prometheus-client = "0.22.1"
+{%- endif %}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "8.4.1"
+pytest-asyncio = "1.0.0"
+httpx = "0.28.1"
+ruff = "0.12.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "integration: requires Docker / live infrastructure. Skip with: pytest -m 'not integration'",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["src/infrastructure/persistence/db/migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "BLE"]
+ignore = ["B008", "UP007", "UP038", "UP046"]
+{%- if cookiecutter.use_metrics %}
+
+[tool.ruff.lint.per-file-ignores]
+"src/infrastructure/metrics/instruments/*.py" = ["I001"]
+"src/infrastructure/metrics/scrape.py" = ["I001"]
+{%- endif %}
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.ruff.format]
+quote-style = "single"

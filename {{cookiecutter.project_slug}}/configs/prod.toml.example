@@ -1,0 +1,52 @@
+# Copy to configs/prod.toml. Values below match docker-compose.dev.yml.
+# Any key can be overridden by env: SECTION__KEY, e.g. POSTGRES__HOST=db.
+
+[fastapi]
+title = "{{ cookiecutter.project_name }}"
+debug = false
+docs_enabled = true
+cors_origins = ["*"]
+
+[gunicorn]
+workers = 4
+timeout = 120
+
+[logging]
+# json for log collectors, plain for reading in a terminal
+format = "plain"
+level = "INFO"
+{%- if cookiecutter.use_metrics %}
+
+[prometheus]
+multiproc_dir = "prometheus_metrics"
+scrape_timeout_seconds = 5
+{%- endif %}
+
+[postgres]
+host = "localhost"
+port = 5432
+user = "app"
+password = "app"
+db = "app"
+pool_size = 15
+max_overflow = 10
+{%- if cookiecutter.use_taskiq %}
+
+[redis]
+host = "localhost"
+port = 6379
+db = 0
+
+[taskiq]
+health_port = 8003
+{%- endif %}
+{%- if cookiecutter.use_kafka %}
+
+[kafka]
+# 127.0.0.1, not localhost: librdkafka tries ::1 first and Docker listens on IPv4 only
+bootstrap_servers = "127.0.0.1:9092"
+consumer_group = "{{ cookiecutter.project_slug }}"
+{%- if cookiecutter.include_example %}
+items_topic = "items.commands"
+{%- endif %}
+{%- endif %}
