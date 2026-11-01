@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "json": {
+      "()": "src.config.logger.formatters.RedactingJsonFormatter",
+      "fmt": "%(levelname)s %(name)s %(message)s %(trace_id)s %(process)d %(funcName)s %(lineno)d",
+      "rename_fields": {"levelname": "level", "name": "logger"},
+      "timestamp": true,
+      "json_ensure_ascii": false
+    },
+    "plain": {
+      "format": "%(asctime)s %(levelname)s [%(trace_id)s] %(name)s: %(message)s"
+    }
+  },
+  "filters": {
+    "context": {
+      "()": "src.config.logger.context.ContextFilter"
+    }
+  },
+  "handlers": {
+    "console": {
+      "class": "logging.StreamHandler",
+      "level": "DEBUG",
+      "formatter": "json",
+      "filters": ["context"],
+      "stream": "ext://sys.stdout"
+    }
+  },
+  "loggers": {
+    "gunicorn.error": {"level": "INFO", "handlers": [], "propagate": false},
+    "gunicorn.access": {"level": "INFO", "handlers": [], "propagate": false},
+    "uvicorn": {"level": "INFO", "handlers": ["console"], "propagate": false},
+    "uvicorn.error": {"level": "INFO", "handlers": ["console"], "propagate": false},
+    "uvicorn.access": {"level": "INFO", "handlers": [], "propagate": false},
+    "faststream": {"level": "INFO", "handlers": ["console"], "propagate": false},
+    "taskiq": {"level": "INFO", "handlers": ["console"], "propagate": false},
+    "httpx": {"level": "WARNING", "handlers": ["console"], "propagate": false}
+  },
+  "root": {
+    "level": "INFO",
+    "handlers": ["console"]
+  }
+}
