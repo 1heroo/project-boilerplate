@@ -8,7 +8,7 @@
   "use_kafka": true,
   "use_taskiq": true,
   "use_metrics": true,
-  "include_example": true,
+  "include_example": false,
   "include_admin_stub": true,
   "__prompts__": {
     "project_name": "Название проекта",
@@ -20,7 +20,7 @@
     "use_kafka": "Kafka-консьюмеры (FastStream, src/broker.py)?",
     "use_taskiq": "Фоновые задачи taskiq + Redis (воркер и планировщик)?",
     "use_metrics": "Prometheus-метрики (отдельная апка src/metrics.py)?",
-    "include_example": "Пример сущности Item через все слои (CRUD, событие, задача, консьюмер)?",
+    "include_example": "Добавить справочный пример сущности Item через все слои (CRUD, событие, задача, консьюмер)?",
     "include_admin_stub": "Пустые пакеты-заготовки под админку?"
   },
   "_copy_without_render": [

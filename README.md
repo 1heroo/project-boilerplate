@@ -9,7 +9,7 @@ Prometheus-метрики.
 
 ```bash
 uvx cookiecutter gh:1heroo/project-boilerplate
-# или из git: uvx cookiecutter git+<url-репозитория>
+# или из локального клона: uvx cookiecutter ./project-boilerplate
 ```
 
 Cookiecutter задаст вопросы (развилки):
@@ -24,14 +24,14 @@ Cookiecutter задаст вопросы (развилки):
 | `use_kafka` | да | `src/broker.py`, FastStream-консьюмеры, Kafka в compose |
 | `use_taskiq` | да | Воркер и планировщик taskiq, Redis, `ITaskQueue` |
 | `use_metrics` | да | Отдельная metrics-апка, HTTP-метрики, multiprocess Prometheus |
-| `include_example` | да | Сущность `Item` через все слои: CRUD, событие → задача, Kafka-консьюмер, тесты |
+| `include_example` | нет | Справочная сущность `Item` через все слои: CRUD, событие → задача, Kafka-консьюмер, тесты. Включать, чтобы посмотреть образец |
 | `include_admin_stub` | да | Пустые пакеты `application/admin/`, `routes/admin/` |
 
 Без вопросов, с параметрами:
 
 ```bash
 uvx cookiecutter --no-input gh:1heroo/project-boilerplate \
-  project_name="Payments Reports" use_kafka=false include_example=false
+  project_name="Payments Reports" use_kafka=false
 ```
 
 Дальше — `README.md` сгенерированного проекта (`make install requirements`,
